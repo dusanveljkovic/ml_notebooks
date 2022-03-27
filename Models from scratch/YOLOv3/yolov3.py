@@ -95,10 +95,6 @@ def YoloOutput(filters, anchors, classes, name=None):
 
 def yolo_boxes(pred, anchors, classes):
   grid_size = tf.shape(pred)[1:3]
-  print('pred')
-  print(pred)
-  print('grid_size')
-  print(grid_size)
   box_xy, box_wh, objectness, class_probs = tf.split(
     pred, (2, 2, 1, classes), axis=-1
   )

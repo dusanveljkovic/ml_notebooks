@@ -3,8 +3,8 @@ from utils import load_class_names, output_boxes, draw_outputs, resize_image
 import cv2 as cv
 import numpy as np
 import os
-from yolov3 import YOLOv3Net
-from yolov33 import YoloV3
+from yolov3 import YoloV3
+from secrets import randbits
 
 physical_devices = tf.config.experimental.list_logical_devices('GPU')
 assert len(physical_devices) > 0, 'Not enough GPU hardware devices available'
@@ -24,17 +24,6 @@ model_path = 'saved_model/yolov3'
 
 
 def main():
-  
-  '''
-  if os.path.exists(model_path):
-    model = tf.keras.models.load_model(model_path)
-  else:
-    model = YOLOv3Net(cfg_file, model_size, num_classes)
-    model.load_weights(weight_file)
-    
-    model.save(model_path)
-  '''
-  
   model = YoloV3()
   model.load_weights(weight_file).expect_partial()
   
@@ -62,6 +51,44 @@ def main():
   cv.imshow(win_name, image)
   cv.waitKey(0)
   cv.destroyAllWindows()
+
   
+  '''
+  model = YoloV3()
+  model.load_weights(weight_file).expect_partial()
+  
+  class_names = load_class_names(class_name)
+  
+  vid = cv.VideoCapture(0)
+  width = int(vid.get(cv.CAP_PROP_FRAME_WIDTH))
+  height = int(vid.get(cv.CAP_PROP_FRAME_HEIGHT))
+  fps = int(vid.get(cv.CAP_PROP_FPS))
+  codec = cv.VideoWriter_fourcc(*'mp4v')
+  name = 'TMP_OUT_' + str(randbits(50)) + '.mp4'
+    
+  out = cv.VideoWriter(name, codec, fps, (width, height))
+    
+  while True:
+    ret, img = vid.read()
+      
+
+      
+    img_in = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    img_in = tf.expand_dims(img_in, 0)
+    img_in = tf.image.resize(img_in, (416, 416))
+    img_in = img_in / 255
+      
+    boxes, scores, classes, nums = model(img_in)
+      
+    image = draw_outputs(img, (boxes, scores, classes, nums), class_names)
+    
+    cv.imshow('frame', image)
+
+    if cv.waitKey(1) & 0xFF == ord('q'):
+      break
+    #out.write(image)
+  vid.release()
+  cv.destroyAllWindows()
+  '''
 if __name__ == '__main__':
   main()
